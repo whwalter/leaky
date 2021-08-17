@@ -1,0 +1,39 @@
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: leaky
+  namespace: default
+  labels:
+    app: leaky
+spec:
+#  affinity:
+#    podAffinity:
+#      requiredDuringSchedulingIgnoredDuringExecution:
+#      - labelSelector:
+#          matchExpressions:
+#          - key: release
+#            operator: In
+#            values:
+#            - dumbserver
+#        topologyKey: kubernetes.io/hostname
+  containers:
+  - image: williamwalter/leaky:latest
+    imagePullPolicy: Always
+    name: server
+    resources:
+      requests:
+#        cpu: 1000m
+        memory: 1127Mi
+      limits:
+        memory: 1127Mi
+  - image: williamwalter/leaky:latest
+    imagePullPolicy: Always
+    name: client
+    command: ["leak-client"]
+    resources:
+      requests:
+#        cpu: 1000m
+        memory: 1127Mi
+      limits:
+        memory: 1127Mi
