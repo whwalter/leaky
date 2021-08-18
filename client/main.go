@@ -12,7 +12,7 @@ import (
 )
 type config struct {
 	mu sync.Mutex
-	cons []*net.Conn
+	cons []net.Conn
 	bufferSize *int
 	maxSock *int
 }
@@ -48,21 +48,34 @@ func main() {
 				errCount++
 				return
 			}
+			/*
 			_, err = conn.Write(make([]byte, bs))
 			if err != nil {
 				errCount++
 				return
 			}
+			*/
 			conf.mu.Lock()
-			conf.cons = append(conf.cons, &conn)
+			conf.cons = append(conf.cons, conn)
 			conf.mu.Unlock()
 			time.Sleep(24 * time.Hour)
 		}()
-		time.Sleep(100 * time.Millisecond)
-	jmt.Printf("cons: %d\t errs: %d\n", len(conf.cons), errCount)
+		time.Sleep(10 * time.Millisecond)
+		fmt.Printf("cons: %d\t errs: %d\n", len(conf.cons), errCount)
 	}
 
 	time.Sleep(10 * time.Second)
+	fmt.Println("Writing ", len(conf.cons), " conns")
+	for i,conn := range conf.cons {
+		fmt.Println("writing ", i )
+		j := i
+		go func(i int,  conn net.Conn){
+			s := time.Now()
+			_, e := conn.Write(make([]byte, bs)); if e != nil{ errCount++; fmt.Println("failed write") }
+			end := time.Now()
+			fmt.Printf("Write for %d took %d\n", j, end.Sub(s).Seconds())
+		}(j, conn)
+	}
 	fmt.Printf("cons: %d\t errs: %d\n", len(conf.cons), errCount)
 	time.Sleep(24 * time.Hour)
 /*
