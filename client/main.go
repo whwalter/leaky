@@ -20,7 +20,7 @@ type config struct {
 var conf config
 
 func init() {
-	conf.bufferSize = flag.Int("b", 742785024, "Size of the buffer you are trying to fill in bytes, default: 742785024")
+	conf.bufferSize = flag.Int("b", 828375040, "Size of the buffer you are trying to fill in bytes, default: 828375040")
 	conf.maxSock = flag.Int("s", 50000, "Maximum number of sockets to create, default: 50000")
 }
 func main() {
@@ -29,7 +29,9 @@ func main() {
 //	cons := []net.Conn{}
 //	count := 0
 	errCount := 0
-	bs := 1024 * 1024
+
+	// This is the max tcp_wmem value on an m5.large
+	bs := 1024 * 1024 * 16
 
 	// we need buffMax 1Mi buffers to fill the queue
 	buffMax := *conf.bufferSize / bs
@@ -39,7 +41,6 @@ func main() {
 		max = buffMax
 	}
 
-	max = 3000
 	fmt.Println("max: ", max, " BuffMax: ", buffMax)
 	for i := 0; i < max; i++ {
 		go func(){
@@ -48,17 +49,13 @@ func main() {
 				errCount++
 				return
 			}
-			/*
-			_, err = conn.Write(make([]byte, bs))
-			if err != nil {
-				errCount++
-				return
+			if tcpC, ok := conn.(*net.TCPConn); ok {
+				if err := tcpC.SetWriteBuffer(16777216); err != nil { errCount++; return }
 			}
-			*/
+
 			conf.mu.Lock()
 			conf.cons = append(conf.cons, conn)
 			conf.mu.Unlock()
-			time.Sleep(24 * time.Hour)
 		}()
 		time.Sleep(10 * time.Millisecond)
 		fmt.Printf("cons: %d\t errs: %d\n", len(conf.cons), errCount)

@@ -32,6 +32,8 @@ func main() {
 			cons = append(cons, c)
 		}
 	}(cons)
+	for {time.Sleep(10 * time.Second); fmt.Println(len(cons))}
+	/*
 	for {
 		for _,con := range cons {
 			go func(net.Conn){
@@ -41,4 +43,5 @@ func main() {
 			time.Sleep(1 * time.Second)
 		}
 	}
+	*/
 }
